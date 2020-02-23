@@ -422,3 +422,6 @@ error_user_does_not_exist = "⚠️  The selected user does not exist"
 fatal_conversation_exception = "☢️ Oh no! An <b>error</b> interrupted this conversation\n" \
                                "The error was reported to the developer of greed so that he can fix it.\n" \
                                "To restart the conversation, send the /start command."
+
+# shit: holy shit
+menu_extra = "A sho u nas tut"

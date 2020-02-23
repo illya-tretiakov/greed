@@ -1,40 +1,31 @@
+import importlib
 import sys
+import threading
 import telegram
-import worker
 import configloader
 import utils
-import threading
-import importlib
+import worker
 
 language = configloader.config["Config"]["language"]
 strings = importlib.import_module("strings." + language)
 
 def main():
-    """The core code of the program. Should be run only in the main process!"""
-
-    # Rename the main thread for presentation purposes
     threading.current_thread().name = "Core"
-
-    # Create a bot instance
     bot = utils.DuckBot(configloader.config["Telegram"]["token"])
-
     # Test the specified token
     try:
         bot.get_me()
     except telegram.error.Unauthorized:
-        print("The token you have entered in the config file is invalid.\n"
-              "Fix it, then restart this script.")
+        print("токен указанный в config.ini не сработал. перепроверь.")
         sys.exit(1)
-
     # Create a dictionary linking the chat ids to the ChatWorker objects
     # {"1234": <ChatWorker>}
     chat_workers = {}
-
     # Current update offset; if None it will get the last 100 unparsed messages
     next_update = None
 
     # Notify on the console that the bot is starting
-    print("greed-bot is now starting!")
+    print("бот успешно запущен.")
 
     # Main loop of the program
     while True:

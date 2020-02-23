@@ -1,18 +1,20 @@
+import datetime
+import importlib
+import os
+import queue as queuem
+import re
+import sys
 import threading
 import typing
 import uuid
-import datetime
-import telegram
-import configloader
-import sys
-import queue as queuem
-import database as db
-import re
-import utils
-import os
 from html import escape
+
 import requests
-import importlib
+import telegram
+
+import configloader
+import database as db
+import utils
 
 language = configloader.config["Config"]["language"]
 strings = importlib.import_module("strings." + language)
@@ -112,7 +114,7 @@ class ChatWorker(threading.Thread):
             if self.sentry_client is not None:
                 self.sentry_client.captureException()
 
-    def stop(self, reason: str=""):
+    def stop(self, reason: str = ""):
         """Gracefully stop the worker process"""
         # Send a stop message to the thread
         self.queue.put(StopSignal(reason))
@@ -194,7 +196,7 @@ class ChatWorker(threading.Thread):
             return match.group(1)
 
     def __wait_for_precheckoutquery(self,
-                                    cancellable: bool=False) -> typing.Union[telegram.PreCheckoutQuery, CancelSignal]:
+                                    cancellable: bool = False) -> typing.Union[telegram.PreCheckoutQuery, CancelSignal]:
         """Continue getting updates until a precheckoutquery is received.
         The payload is checked by the core before forwarding the message."""
         while True:
@@ -297,7 +299,8 @@ class ChatWorker(threading.Thread):
             keyboard = [[telegram.KeyboardButton(strings.menu_order)],
                         [telegram.KeyboardButton(strings.menu_order_status)],
                         [telegram.KeyboardButton(strings.menu_add_credit)],
-                        [telegram.KeyboardButton(strings.menu_help), telegram.KeyboardButton(strings.menu_bot_info)]]
+                        [telegram.KeyboardButton(strings.menu_help), telegram.KeyboardButton(strings.menu_bot_info)]],
+                        [telegram.KeyboardButton(strings.menu_extra)]
             # Send the previously created keyboard to the user (ensuring it can be clicked only 1 time)
             self.bot.send_message(self.chat.id,
                                   strings.conversation_open_user_menu.format(credit=utils.Price(self.user.credit)),

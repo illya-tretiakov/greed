@@ -1,13 +1,15 @@
-import typing
-from sqlalchemy import create_engine, Column, ForeignKey, UniqueConstraint
-from sqlalchemy import Integer, BigInteger, String, Text, LargeBinary, DateTime, Boolean
-from sqlalchemy.orm import sessionmaker, relationship
-from sqlalchemy.ext.declarative import declarative_base
-import configloader
-import telegram
-import requests
-import utils
 import importlib
+import typing
+
+import requests
+import telegram
+from sqlalchemy import Integer, BigInteger, String, Text, LargeBinary, DateTime, Boolean
+from sqlalchemy import create_engine, Column, ForeignKey, UniqueConstraint
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, relationship
+
+import configloader
+import utils
 
 language = configloader.config["Config"]["language"]
 strings = importlib.import_module("strings." + language)
@@ -177,6 +179,7 @@ class Transaction(TableDeclarativeBase):
     __table_args__ = (UniqueConstraint("provider", "provider_charge_id"),)
 
     def __str__(self):
+
         string = f"<b>T{self.transaction_id}</b> | {str(self.user)} | {utils.Price(self.value)}"
         if self.refunded:
             string += f" | {strings.emoji_refunded}"

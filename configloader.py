@@ -1,6 +1,6 @@
-import sys
-import os
 import configparser
+import os
+import sys
 
 # Check if the config file exists, and create one if it doesn't
 if not os.path.isfile("config/config.ini"):
