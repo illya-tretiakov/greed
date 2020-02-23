@@ -300,7 +300,7 @@ class ChatWorker(threading.Thread):
                         [telegram.KeyboardButton(strings.menu_order_status)],
                         [telegram.KeyboardButton(strings.menu_add_credit)],
                         [telegram.KeyboardButton(strings.menu_help), telegram.KeyboardButton(strings.menu_bot_info)]],
-                        [telegram.KeyboardButton(strings.menu_extra)]
+
             # Send the previously created keyboard to the user (ensuring it can be clicked only 1 time)
             self.bot.send_message(self.chat.id,
                                   strings.conversation_open_user_menu.format(credit=utils.Price(self.user.credit)),
