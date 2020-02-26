@@ -25,8 +25,8 @@ product_format_string = "<b>{name}</b>\n" \
 order_number = "Заказ #{id}"
 
 # Order info string, shown to the admins
-order_format_string = "Покупатель {user}\n" \
-                      "{date} сделал заказ:\n" \
+order_format_string = "Покупатель\t{user}\n" \
+                      "Дата заказа:\t{date}\n" \
                       "\n" \
                       "{items}\n" \
                       "Всего: <b>{value}</b>\n" \
@@ -59,20 +59,19 @@ conversation_after_start = "Привет!\n" \
                            "Сейчас находится в тестовом режиме.\n"
 
 # Conversation: to send an inline keyboard you need to send a message with it
-conversation_open_user_menu = "Что будем делать?\n" \
-                              "💰 У вас <b>{credit}</b> на счете.\n" \
+conversation_open_user_menu = "💰 У вас <b>{credit}</b> на счете.\n" \
                               "\n" \
                               "<i>Выберите нужное действие.</i>\n"
 
 # Conversation: like above, but for administrators
-conversation_open_admin_menu = "Воу воу да ты же 💼 <b>админ</b>!\n" \
-                               "Что делать будем?\n"
+conversation_open_admin_menu = "Привет, 💼 <b>админ</b>!\n" \
+                               "Выберите действие.\n"
 
 # Conversation: select a payment method
 conversation_payment_method = "Как хочешь пополнить счет?"
 
 # Conversation: select a product to edit
-conversation_admin_select_product = "✏️ Что покупаем?"
+conversation_admin_select_product = "✏️ Выберите товар для редактирования."
 
 # Conversation: select a product to delete
 conversation_admin_select_product_to_delete = "❌ какой товар удалить?"
@@ -92,7 +91,7 @@ conversation_confirm_cart = "🛒 В корзине сейчас такие то
                             "<i>Если хочешь купить уже, мой азартный друг, нажимай кнопку Готово.</i>\n"
 
 # Conversation: the user activated the live orders mode
-conversation_live_orders_start = "Ты в режиме <b>живых заказов ебааать!</b>\n" \
+conversation_live_orders_start = "Ты в режиме <b>живых заказов!</b>\n" \
                                  "Заказы, которые оформили пользователи, появятся прям вот тут" \
                                  "и можно их обозначить ✅ выполненными." \
                                  "или ✴️ выдать пзшку.\n" \
@@ -114,13 +113,13 @@ conversation_switch_to_user_mode = " Ты переключаешься в реж
 conversation_expired = "🕐  Ты слишком долго не писал.. Надеюсь, ты не начал ходить в качалку и перестать юзать пхпх)\n"
 
 # User menu: order
-menu_order = "🛒 В наличии"
+menu_order = "🛒 В магизн"
 
 # User menu: order status
 menu_order_status = "🛍 Мои заказы"
 
 # User menu: add credit
-menu_add_credit = "💵 Пополнить"
+menu_add_credit = "💵 Пополнить счет"
 
 # User menu: bot info
 menu_bot_info = "ℹ️ Инфо бота"
@@ -132,13 +131,13 @@ menu_cash = "💵 Деньги"
 menu_credit_card = "💳 Карта"
 
 # Admin menu: products
-menu_products = "📝️ Products"
+menu_products = "📝️ Управление товаром"
 
 # Admin menu: orders
 menu_orders = "📦 Заказы"
 
 # Menu: transactions
-menu_transactions = "💳 Список транзкаций"
+menu_transactions = "💳 Выданные клады"
 
 # Menu: edit credit
 menu_edit_credit = "💰 Создать транзакцию"
@@ -224,8 +223,17 @@ text_completed = "завершен"
 # Text: refunded order
 text_refunded = "выдан пз"
 
+# cat
+ask_product_cat = "Категория товара?"
+
 # Add product: name?
 ask_product_name = "как называется товар?"
+
+# product amount
+ask_product_amount = "Количество? (шт для колес, г для остального"
+
+# product coords
+ask_product_coords = "Координаты в формате xx.xxxxxx yy.yyyyyy"
 
 # Add product: description?
 ask_product_description = "описание товара?"
@@ -395,3 +403,16 @@ fatal_conversation_exception = "☢️ Бляя<b>яяяяя</b>яяядь! Сл
 
 # shit holy shit
 menu_extra = "гостинець від їжачка"
+
+# payment method
+payment_easy = "EasyPay"
+
+# weed
+cat_weed = "Weed"
+cat_white = "Стимуляторы"
+cat_wheels = "Таблы"
+
+amount_quarter = "0.25"
+amount_half = "0.5"
+amount_one = "1"
+amount_two = "2"

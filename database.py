@@ -2,12 +2,11 @@ import importlib
 import typing
 
 import requests
-import telegram
-from sqlalchemy import Integer, BigInteger, String, Text, LargeBinary, DateTime, Boolean
+from telegram import Chat, File
+from sqlalchemy import Integer, BigInteger, String, Text, LargeBinary, DateTime, Boolean, Float
 from sqlalchemy import create_engine, Column, ForeignKey, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
-
 import configloader
 import utils
 
@@ -33,14 +32,14 @@ class User(TableDeclarativeBase):
     first_name = Column(String, nullable=False)
     last_name = Column(String)
     username = Column(String)
-
+    karma = Column(Integer, default=0)
     # Current wallet credit
     credit = Column(Integer, nullable=False)
 
     # Extra table parameters
     __tablename__ = "users"
 
-    def __init__(self, telegram_chat: telegram.Chat, **kwargs):
+    def __init__(self, telegram_chat: Chat, **kwargs):
         # Initialize the super
         super().__init__(**kwargs)
         # Get the data from telegram
@@ -75,6 +74,25 @@ class User(TableDeclarativeBase):
         return f"<User {self} having {self.credit} credit>"
 
 
+class GoodSecret(TableDeclarativeBase):
+    """table of what user actually purchases."""
+
+    __tablename__ = "goodsecret"
+
+    # id
+    id = Column(Integer, primary_key=True)
+    # x
+    x = Column(Float)
+    # y
+    y = Column(Float)
+    # photo base64
+    photo_base64 = Column(String)
+    # photo url if above wont work (hope it works)
+    photo_url = Column(String)
+    # kura notes
+    courier_notes = Column(String)
+
+
 class Product(TableDeclarativeBase):
     """A purchasable product."""
 
@@ -84,12 +102,22 @@ class Product(TableDeclarativeBase):
     name = Column(String)
     # Product description
     description = Column(Text)
+    # Good cat
+    good_category = Column(String)
+    # amount
+    good_amount = Column(String)
+    # Good location
+    good_location = Column(String)
     # Product price, if null product is not for sale
     price = Column(Integer)
     # Image data
     image = Column(LargeBinary)
     # Product has been deleted
     deleted = Column(Boolean, nullable=False)
+    # good secret id
+    good_secret_id = Column(Integer, ForeignKey("goodsecret.id"))
+    # good secret data
+    good_secret = relationship('GoodSecret')
 
     # Extra table parameters
     __tablename__ = "products"
@@ -99,7 +127,7 @@ class Product(TableDeclarativeBase):
     def __str__(self):
         return self.text()
 
-    def text(self, style: str="full", cart_qty: int=None):
+    def text(self, style: str = "full", cart_qty: int = None):
         """Return the product details formatted with Telegram HTML. The image is omitted."""
         if style == "short":
             return f"{cart_qty}x {utils.telegram_html_escape(self.name)} - {str(utils.Price(self.price) * cart_qty)}"
@@ -133,7 +161,7 @@ class Product(TableDeclarativeBase):
                                       "parse_mode": "HTML"})
         return r.json()
 
-    def set_image(self, file: telegram.File):
+    def set_image(self, file: File):
         """Download an image from Telegram and store it in the image column.
         This is a slow blocking function. Try to avoid calling it directly, use a thread if possible."""
         # Download the photo through a get request
@@ -193,6 +221,18 @@ class Transaction(TableDeclarativeBase):
         return f"<Transaction {self.transaction_id} for User {self.user_id} {str(self)}>"
 
 
+class Courier(TableDeclarativeBase):
+    """Kura which delivers packages."""
+    __tablename__ = "couriers"
+    # user id, what's unclear? (u bitch)
+    user_id = Column(Integer, ForeignKey("users.user_id"), primary_key=True)
+    # user object for easier access in code
+    user = relationship("User")
+    # nuff said
+    packages_delivered = Column(Integer, default=0)
+    couriereliability = Column(Integer, default=0)
+
+
 class Admin(TableDeclarativeBase):
     """A greed administrator with his permissions."""
 
@@ -212,7 +252,7 @@ class Admin(TableDeclarativeBase):
     __tablename__ = "admins"
 
     def __repr__(self):
-        return f"<Admin {self.user_id}>"
+        return f"<Админ {self.user_id}>"
 
 
 class Order(TableDeclarativeBase):
@@ -243,7 +283,7 @@ class Order(TableDeclarativeBase):
     __tablename__ = "orders"
 
     def __repr__(self):
-        return f"<Order {self.order_id} placed by User {self.user_id}>"
+        return f"<Заказ {self.order_id}, разместил пользователь {self.user_id}>"
 
     def get_text(self, session, user=False):
         joined_self = session.query(Order).filter_by(order_id=self.order_id).join(Transaction).one()
@@ -265,16 +305,16 @@ class Order(TableDeclarativeBase):
                                                            items=items,
                                                            notes=self.notes,
                                                            value=str(utils.Price(-joined_self.transaction.value))) + \
-                (strings.refund_reason.format(reason=self.refund_reason) if self.refund_date is not None else "")
+                   (strings.refund_reason.format(reason=self.refund_reason) if self.refund_date is not None else "")
         else:
             return status_emoji + " " + \
-                strings.order_number.format(id=self.order_id) + "\n" + \
-                strings.order_format_string.format(user=self.user.mention(),
-                                                   date=self.creation_date.isoformat(),
-                                                   items=items,
-                                                   notes=self.notes if self.notes is not None else "",
-                                                   value=str(utils.Price(-joined_self.transaction.value))) + \
-                (strings.refund_reason.format(reason=self.refund_reason) if self.refund_date is not None else "")
+                   strings.order_number.format(id=self.order_id) + "\n" + \
+                   strings.order_format_string.format(user=self.user.mention(),
+                                                      date=self.creation_date.isoformat(),
+                                                      items=items,
+                                                      notes=self.notes if self.notes is not None else "",
+                                                      value=str(utils.Price(-joined_self.transaction.value))) + \
+                   (strings.refund_reason.format(reason=self.refund_reason) if self.refund_date is not None else "")
 
 
 class OrderItem(TableDeclarativeBase):
@@ -287,6 +327,9 @@ class OrderItem(TableDeclarativeBase):
     product = relationship("Product")
     # The order in which this item is being purchased
     order_id = Column(Integer, ForeignKey("orders.order_id"), nullable=False)
+
+    courier_id = Column(Integer, ForeignKey("couriers.user_id"), nullable=False)
+    courier = relationship("Courier")
 
     # Extra table parameters
     __tablename__ = "orderitems"

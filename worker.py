@@ -244,6 +244,17 @@ class ChatWorker(threading.Thread):
             # Return the photo array
             return update.message.photo
 
+    def __wait_for_location(self, cancellable: bool=False) -> typing.Union[typing.List[telegram.Location], CancelSignal]:
+        while True:
+            update = self.__receive_next_update()
+            if cancellable and isinstance(update, CancelSignal):
+                return update
+            if update.message is None:
+                continue
+            if update.message.location is None:
+                continue
+            return  update.message.location
+
     def __wait_for_inlinekeyboard_callback(self, cancellable: bool=True) \
             -> typing.Union[telegram.CallbackQuery, CancelSignal]:
         """Continue getting updates until an inline keyboard callback is received, then return it."""
@@ -299,7 +310,8 @@ class ChatWorker(threading.Thread):
             keyboard = [[telegram.KeyboardButton(strings.menu_order)],
                         [telegram.KeyboardButton(strings.menu_order_status)],
                         [telegram.KeyboardButton(strings.menu_add_credit)],
-                        [telegram.KeyboardButton(strings.menu_help), telegram.KeyboardButton(strings.menu_bot_info)]],
+                        [telegram.KeyboardButton(strings.menu_help), telegram.KeyboardButton(strings.menu_bot_info)],
+                        [telegram.KeyboardButton("sonic-hub")]]
 
             # Send the previously created keyboard to the user (ensuring it can be clicked only 1 time)
             self.bot.send_message(self.chat.id,
@@ -331,6 +343,9 @@ class ChatWorker(threading.Thread):
             elif selection == strings.menu_help:
                 # Go to the Help menu
                 self.__help_menu()
+            elif selection == "sonic-hub":
+                self.bot.send_message("в разработке! ждите обновлений.")
+                self.__user_menu()
 
     def __order_menu(self):
         """User menu to order products from the shop."""
@@ -558,17 +573,12 @@ class ChatWorker(threading.Thread):
         self.bot.send_message(self.chat.id, strings.conversation_payment_method,
                               reply_markup=telegram.ReplyKeyboardMarkup(keyboard, one_time_keyboard=True))
         # Wait for a reply from the user
-        selection = self.__wait_for_specific_message([strings.menu_cash, strings.menu_credit_card, strings.menu_cancel])
+        selection = self.__wait_for_specific_message([strings.easypay, strings.menu_cancel])
         # If the user has selected the Cash option...
-        if selection == strings.menu_cash:
+        if selection == strings.easypay:
             # Go to the pay with cash function
             self.bot.send_message(self.chat.id,
                                   strings.payment_cash.format(user_cash_id=self.user.identifiable_str()))
-        # If the user has selected the Credit Card option...
-        elif selection == strings.menu_credit_card:
-            # Go to the pay with credit card function
-            self.__add_credit_cc()
-        # If the user has selected the Cancel option...
         elif selection == strings.menu_cancel:
             # Send him back to the previous menu
             return
@@ -769,13 +779,32 @@ class ChatWorker(threading.Thread):
 
     def __edit_product_menu(self, product: typing.Optional[db.Product]=None):
         """Add a product to the database or edit an existing one."""
+        # aza
+        cat_keyboard = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(strings.cat_weed,
+                                                                                     callback_data="cat_weed")],
+                                                      [telegram.InlineKeyboardButton(strings.cat_white,
+                                                                                     callback_data="cat_white")],
+                                                      [telegram.InlineKeyboardButton(strings.cat_wheels,
+                                                                                     callback_data="cat_wheels")]])
         # Create an inline keyboard with a single skip button
         cancel = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(strings.menu_skip,
                                                                                callback_data="cmd_cancel")]])
+        self.bot.send_message(self.chat.id, strings.ask_product_cat, reply_markup=cat_keyboard)
+        good_cat = self.__wait_for_inlinekeyboard_callback(cancellable=True)
+
+        # Ask the question to the user
+        amount_keybd = telegram.InlineKeyboardMarkup([[telegram.InlineKeyboardButton(strings.amount_quarter,
+                                                                                     callback_data="0,25")],
+                                                      [telegram.InlineKeyboardButton(strings.amount_half,
+                                                                                     callback_data="0,5")],
+                                                      [telegram.InlineKeyboardButton(strings.amount_one,
+                                                                                     callback_data="1")],
+                                                      [telegram.InlineKeyboardButton(strings.amount_two,
+                                                                                     callback_data="2")]])
+        self.bot.send_message(self.chat.id, strings.ask_product_amount, reply_markup=amount_keybd)
+        amount_res = self.__wait_for_inlinekeyboard_callback(cancellable=True)
         # Ask for the product name until a valid product name is specified
         while True:
-            # Ask the question to the user
-            self.bot.send_message(self.chat.id, strings.ask_product_name)
             # Display the current name if you're editing an existing product
             if product:
                 self.bot.send_message(self.chat.id, strings.edit_current_value.format(value=escape(product.name)),
@@ -797,6 +826,14 @@ class ChatWorker(threading.Thread):
                                   reply_markup=cancel)
         # Wait for an answer
         description = self.__wait_for_regex(r"(.*)", cancellable=bool(product))
+        # ask for photo
+        self.bot.send_message("фото клада:")
+        photo_url = self.__wait_for_photo(cancellable=bool(product))
+
+        self.bot.send_message(strings.ask_product_coords)
+
+        coords = self.__wait_for_location()
+
         # Ask for the product price
         self.bot.send_message(self.chat.id,
                               strings.ask_product_price)
@@ -827,6 +864,10 @@ class ChatWorker(threading.Thread):
             # noinspection PyTypeChecker
             product = db.Product(name=name,
                                  description=description,
+                                 photo_url=photo_url,
+                                 good_amount=amount_res,
+                                 good_location=coords,
+                                 good_category=good_cat,
                                  price=int(price) if price is not None else None,
                                  deleted=False)
             # Add the record to the database
